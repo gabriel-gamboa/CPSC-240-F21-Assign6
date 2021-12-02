@@ -1,3 +1,10 @@
+loops.o
+sum.o
+sum.lis
+validation.o
+validation.lis
+wrongsum.out
+
 # Prerequisites
 *.d
 
