@@ -1,0 +1,135 @@
+     1                                  ;Program Name        : Clock Speed
+     2                                  ;Programming Language: x86 Assembly
+     3                                  ;Program Description : This file contains the function clock_speed, which 
+     4                                  ;                      parses information from cpuid to obtain the base clock speed
+     5                                  ;                      of the users processor and returns it as a float in xmm0
+     6                                  ;
+     7                                  ;Author              : Aaron Lieberman
+     8                                  ;Email               : AaronLieberman@csu.fullerton.edu
+     9                                  ;Institution         : California State University, Fullerton
+    10                                  ;
+    11                                  ;Copyright (C) 2020 Aaron Lieberman
+    12                                  ;This program is free software: you can redistribute
+    13                                  ;it and/or modify it under the terms of the GNU General Public License
+    14                                  ;version 3 as published by the Free Software Foundation. This program is
+    15                                  ;distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
+    16                                  ;without even the implied Warranty of MERCHANTABILITY or FITNESS FOR A
+    17                                  ;PARTICULAR PURPOSE. See the GNU General Public License for more details.
+    18                                  ;A copy of the GNU General Public License v3 is available here:
+    19                                  ;<https://www.gnu.org/licenses/>.
+    20                                  
+    21                                  extern printf
+    22                                  extern atof
+    23                                  
+    24                                  global clock_speed
+    25                                  
+    26                                  segment .data
+    27 00000000 256C6600                floatform db "%lf",0
+    28 00000004 257300                  stringform db "%s",0
+    29 00000007 3078253031366C780A-     hexform db "0x%016lx",10,0
+    29 00000010 00                 
+    30 00000011 25386300                quadform db "%8c",0
+    31                                  
+    32                                  section .text
+    33                                  clock_speed:
+    34                                  	;15 pushes
+    35 00000000 55                      	push rbp
+    36 00000001 4889E5                  	mov rbp, rsp
+    37 00000004 53                      	push rbx
+    38 00000005 51                      	push rcx
+    39 00000006 52                      	push rdx
+    40 00000007 57                      	push rdi
+    41 00000008 56                      	push rsi
+    42 00000009 4150                    	push r8
+    43 0000000B 4151                    	push r9
+    44 0000000D 4152                    	push r10
+    45 0000000F 4153                    	push r11
+    46 00000011 4154                    	push r12
+    47 00000013 4155                    	push r13
+    48 00000015 4156                    	push r14
+    49 00000017 4157                    	push r15
+    50 00000019 9C                      	pushf
+    51                                  
+    52 0000001A 41BE03000080            	mov r14, 0x80000003 ; this value is passed to cpuid to get information about the processor
+    53 00000020 4D31FF                  	xor r15, r15  ; set loop control variable for section_loop equal to 0
+    54 00000023 4D31DB                  	xor r11, r11  ; set the counter/flag for character collection equal to 0
+    55                                  
+    56                                  section_loop:
+    57 00000026 4D31ED                  	xor r13, r13  ; zero the loop control variable for register loop
+    58                                  
+    59 00000029 4C89F0                  	mov rax, r14  ; get processor brand and information
+    60 0000002C 0FA2                    	cpuid         ; cpu identification
+    61 0000002E 49FFC6                  	inc r14       ; increment the value passed to get the next section of the string
+    62                                  
+    63 00000031 52                      	push rdx      ; 4th set of chars
+    64 00000032 51                      	push rcx      ; 3rd set of chars
+    65 00000033 53                      	push rbx      ; 2nd set of chars
+    66 00000034 50                      	push rax      ; 1st set of chars
+    67                                  
+    68                                  
+    69                                  register_loop:
+    70 00000035 4D31E4                  	xor r12, r12  ; zero the loop control variable for char loop
+    71 00000038 5B                      	pop rbx       ; get new string of 4 chars
+    72                                  
+    73                                  char_loop:
+    74 00000039 4889DA                  	mov rdx, rbx  ; move string of 4 chars to rdx
+    75 0000003C 4881E2FF000000          	and rdx, 0xFF ; gets the first char in string 
+    76 00000043 48C1EB08                	shr rbx, 0x8  ; shifts string to get next char in next iteration
+    77                                  
+    78 00000047 4883FA40                	cmp rdx, 64   ; 64 is the char value for the @ sign
+    79 0000004B 7506                    	jne counter   ; leaves r11, does not set flag
+    80 0000004D 41BB01000000            	mov r11, 1    ; flag and counter to start storing chars in r10
+    81                                  
+    82                                  counter:
+    83 00000053 4983FB01                	cmp r11, 1    ; checks if flag is true
+    84 00000057 7C03                    	jl body       ; skips incrementing if flag is false
+    85 00000059 49FFC3                  	inc r11       ; increments counter if flag is true
+    86                                  
+    87                                  body:
+    88 0000005C 4983FB04                	cmp r11, 4    ; counter is greater than 4
+    89 00000060 7C11                    	jl loop_conditions
+    90 00000062 4983FB07                	cmp r11, 7    ; counter is less than 7
+    91 00000066 7F0B                    	jg loop_conditions
+    92                                  
+    93 00000068 49C1EA08                	shr r10, 0x8  ; r10 acts as a queue for characters
+    94 0000006C 48C1E218                	shl rdx, 0x18 ; moves new character from rdx into free space for r10
+    95 00000070 4909D2                  	or r10, rdx   ; combine the registers
+    96                                  
+    97                                  loop_conditions:
+    98 00000073 49FFC4                  	inc r12
+    99 00000076 4983FC04                	cmp r12, 4 ; char loop
+   100 0000007A 75BD                    	jne char_loop
+   101                                  
+   102 0000007C 49FFC5                  	inc r13
+   103 0000007F 4983FD04                	cmp r13, 4 ; register loop
+   104 00000083 75B0                    	jne register_loop
+   105                                  
+   106 00000085 49FFC7                  	inc r15
+   107 00000088 4983FF02                	cmp r15, 2 ; string loop
+   108 0000008C 7598                    	jne section_loop
+   109                                  
+   110                                  exit:
+   111 0000008E 4152                    	push r10
+   112 00000090 4831C0                  	xor rax, rax
+   113 00000093 4889E7                  	mov rdi, rsp 
+   114 00000096 E8(00000000)            	call atof  ; converts the string representing the clock speed to a float
+   115 0000009B 415A                    	pop r10    ; the value to be returned is already in xmm0, and will be returned
+   116                                  
+   117                                  	; 15 pops
+   118 0000009D 9D                      	popf
+   119 0000009E 415F                    	pop r15
+   120 000000A0 415E                    	pop r14
+   121 000000A2 415D                    	pop r13
+   122 000000A4 415C                    	pop r12
+   123 000000A6 415B                    	pop r11
+   124 000000A8 415A                    	pop r10
+   125 000000AA 4159                    	pop r9
+   126 000000AC 4158                    	pop r8
+   127 000000AE 5E                      	pop rsi
+   128 000000AF 5F                      	pop rdi
+   129 000000B0 5A                      	pop rdx
+   130 000000B1 59                      	pop rcx
+   131 000000B2 5B                      	pop rbx
+   132 000000B3 5D                      	pop rbp
+   133 000000B4 C3                      	ret  ; return xmm0
+   134                                  

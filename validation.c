@@ -77,7 +77,7 @@ double validp()
  }
  if(result && found){
    precision = atof(w);
-   printf("You entered %5.10lf which will be returned to the caller function \n", precision); //why is different number displayed in sample output?
+   printf("You entered %5.10lf which will be returned to the caller function \n", precision); //what number is supposed to be outputted here?
    return precision;
  }
  else{
