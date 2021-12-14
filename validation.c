@@ -1,6 +1,8 @@
 //****************************************************************************************************************************
-//Program name: "Assignment 4".  This program greets a user by their inputted name  *
-//and title.  Copyright (C) 2021  Gabriel Gamboa                                                                                 *
+//Program name: "Assignment 6".  This program takes an inputted precision value from the user and  *
+//computes the value 4 * -1 ^k / 2 *k + 1 from k = 0, incrementing k by 1 until
+//that equation produces a positive value less than the precision value entered.
+//Copyright (C) 2021  Gabriel Gamboa                                                                                 *
 //This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License  *
 //version 3 as published by the Free Software Foundation.                                                                    *
 //This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied         *
@@ -8,33 +10,30 @@
 //A copy of the GNU General Public License v3 is available here:  <https://www.gnu.org/licenses/>.                           *
 //****************************************************************************************************************************
 
-
-
-
 // ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
 // ;Author information
 // ;  Author name: Gabriel Gamboa
 // ;  Author email: gabe04@csu.fullerton.edu
 // ;
 // ;Program information
-// ; Program name: Assignment 4
-// ;  Programming languages X86 with one module in C and one module in C++
-// ;  Date program began 2021-Nov-11
+// ; Program name: Assignment 6
+// ;  Programming languages X86 with two modules in C
+// ;  Date program began 2021-Dec-06
 // ;  Date program completed 2021-Nov-14
 // ;
 // ;Purpose
-// ;  This program takes the value of resistance and current and
-// ;  returns the power computation if inputs are valid, otherwise
-// ;  it tells user to try again
+// ;  This program takes an inputted precision value from the user and
+// ;  computes the value 4 * -1 ^k / 2 *k + 1 from k = 0, incrementing k by 1 until
+// ;  that equation produces a positive value less than the precision value entered.
 // ;Project information
-// ;  Files: maxwell.c, hertz.asm, r.sh
+// ;  Files: sum.asm, clock_speed.asm, loops.c, validation.c, r.sh, rg.sh
 // ;  Status: The program has been tested extensively with no detectable errors.
 // ;
 //This file
-//   File name: maxwell.c
+//   File name: validation.c
 //   Language: C
-//   Compile: g++ -c -Wall -m64 -no-pie -o maxwell.o maxwell.c -std=c++17 #look up c version
-//   Link: g++ -m64 -no-pie -o power.out isfloat.o maxwell.o hertz.o -std=c++17
+//   Compile: gcc -c -Wall -m64 -no-pie -l validation.lis -o validation.o validation.c -std=c11
+//   Link: gcc -m64 -no-pie -o wrongsum.out validation.o loops.o sum.o clock_speed.o -std=c11
 //
 //
 // ;============================================================================================================================================================

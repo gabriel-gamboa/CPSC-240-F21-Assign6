@@ -1,6 +1,8 @@
 ;****************************************************************************************************************************
-;Program name: "Assignment 4".  This program greets a user by their inputted name  *
-;and title.  Copyright (C) 2021  Gabriel Gamboa                                                                                 *
+;Program name: "Assignment 6".  This program takes an inputted precision value from the user and   *
+;computes the value 4 * -1 ^k / 2 *k + 1 from k = 0, incrementing k by 1 until
+;that equation produces a positive value less than the precision value entered.
+;Copyright (C) 2021  Gabriel Gamboa                                                                                 *
 ;This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License  *
 ;version 3 as published by the Free Software Foundation.                                                                    *
 ;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied         *
@@ -14,17 +16,17 @@
 ;  Author email: gabe04@csu.fullerton.edu
 ;
 ;Program information
-; Program name: Assignment 4
-;  Programming languages X86 with one module in C and one module in C++
-;  Date program began 2021-Nov-11
-;  Date program completed 2021-Nov-14
+; Program name: Assignment 6
+;  Programming languages X86 with two modules in C
+;  Date program began 2021-Dec-06
+;  Date program completed 2021-Dec-14
 ;
 ;Purpose
-;  This program takes the value of resistance and current and
-;  returns the power computation if inputs are valid, otherwise
-;  it tells user to try again
+;  This program takes an inputted precision value from the user and
+;  computes the value 4 * -1 ^k / 2 *k + 1 from k = 0, incrementing k by 1 until
+;  that equation produces a positive value less than the precision value entered.
 ;Project information
-;  Files: maxwell.c, hertz.asm, r.sh
+;  Files: sum.asm, clock_speed.asm, loops.c, validation.c, r.sh, rg.sh
 ;  Status: The program has been tested extensively with no detectable errors.
 ;
 ;Translator information
@@ -53,15 +55,8 @@ clock_time db "The time on the clock is now %ld tics.", 10, 0
 sum_mess db "The sum has been computed.", 10, 0
 sum_val db "The sum is %5.9lf.", 10, 0
 precision_test db "The precision in the asm file is %5.9lf ", 10, 0
-promptname db "Please enter your name.  You choose the format of your name: ", 0
-farewell_message db "Gabriel wishes you a Nice Day.", 10, 0
-mess db "Invalid input detected.  You may run this program again", 10, 0
-heightprompt db "Please enter the height in meters of the dropped marble: ", 0
-curprompt db "Please enter the current flow in this circuit: ",0
-marble_time db "The marble will reach the earth after %5.9lf seconds.", 10, 0
-exec_time db "The execution time was %ld.", 10, 0
-one_float_format db "%lf",0
-stringform db "%s", 0
+exec_time db "The execution time was %ld tics.", 10, 0
+
 align 64
 segment .bss  ;Reserved for uninitialized data
 
@@ -96,13 +91,11 @@ pushf                                                       ;Backup rflags
 
 ;get info about processor in bloack before calling processor_mess
 ;========================================================================================
-;call getfreq
-;copy and paste from other program?
+;call clock_speed program to get info
 
 mov rax, 0
-call clock_speed                ;for some reason this number gets number displayed before actual GHz when using lscpu
-movsd xmm15, xmm0           ;besides that bug (resolve with prof), program is ready to submit
-                            ;what is going on in output here?
+call clock_speed
+movsd xmm15, xmm0
 
 mov rax, 1                     ;A zero in rax means printf uses no data from xmm registers.
 mov rdi, processor_mess        ;"The machine is running at a cpu rated at "
@@ -114,15 +107,15 @@ call printf
 ;===============================================================================================================
 tryagain:
 mov rax, 0
-call validp        ;"Please enter the precision number... You entered"
-movsd xmm15, xmm0                            ;where is value from valid_precision stored?
+call validp         ;"Please enter the precision number... You entered"
+movsd xmm15, xmm0   ;value returned from function is
 
 ;create -1.0 to compare with invalid inputs
 push qword -1            ;push qword onto stack so we can convert it to float format to use in our calculations
-cvtsi2sd xmm14, [rsp]   ;convert -1 to -1.0 and store it in xmmm15
-pop rax                 ;why do we need to pop rax. what is in it?
+cvtsi2sd xmm14, [rsp]   ;convert -1 to -1.0 and store it in xmm14
+pop rax
 
-;can we do cmp xmm15, xmm14?
+;ucomisd is floating point version of cmp command
 ucomisd xmm14, xmm15        ;instruction for comparing xmm registers.
 je tryagain
 
@@ -130,12 +123,9 @@ mov rax, 1
 mov rdi, precision_test
 movsd xmm0, xmm15
 call printf
-                            ;if value is stored in xmm- transfer to safer xmm
-;find out where value returned from is stored
-;get a negative one into an xmm register and use the cmp (or equivalent) and jne right after
-;to handle invalid inputs. put condition being jumped into at beginning of loop
 
-;this next block should occur after call to the other C file (not the driver)
+
+;this next block should occur after call to C file recieving and validating input
 ;======Get clock time ========================================================================================================================
 
 
@@ -173,8 +163,8 @@ pop rax
 
 ;initialize xmm14 with value of 0
 push qword 0
-cvtsi2sd xmm7, [rsp]       ;set xmm14 equal to zero for initial addition of xmm14 and xmm11 in loop
-pop rax
+cvtsi2sd xmm7, [rsp]       ;set xmm7 equal to zero for comparison with value to be added to sum
+pop rax                    ;and not breaking out of the loop if value is negative
 
 
 ;initialize r13 to 1 as a  psuedo counter k
@@ -185,8 +175,6 @@ mov r12, 0
 ;start formula loop point here
 calc_sum:
 calc:
-
-
 
 ;create -1.0 to compare with invalid inputs
 push qword -1
@@ -220,10 +208,6 @@ ja power
 ;-1^k is now in xmm14
 ;multiply 4 * -1 ^k / 2 *k + 1   (multiply)
 
-;back up -1^k
-;movsd xmm8, xmm14
-
-
 ;store value of "k" in xmm8 to use in denominator of formula
 cvtsi2sd xmm8, r12
 
@@ -232,8 +216,8 @@ mulsd xmm14, xmm13     ;4 * -1^k stored in xmm14 (numerator)
 mulsd xmm12, xmm8      ;2 * k stored in xmm12
 
 push qword 1            ;push qword onto stack so we can convert it to float format to use in our calculations
-cvtsi2sd xmm10, [rsp]   ;convert -1 to -1.0 and store it in xmmm15
-pop rax                 ;why do we need to pop rax. what is in it?
+cvtsi2sd xmm10, [rsp]   ;convert 1 to 1.0 and store it in xmm10
+pop rax
 
 addsd xmm12, xmm10      ;2 * k + 1 stored in xmm12 (denominator)
 divsd xmm14, xmm12      ;value to be added to sum now stored in xmm14
@@ -241,7 +225,7 @@ divsd xmm14, xmm12      ;value to be added to sum now stored in xmm14
 
 ;restore value of r13
 mov r13, r12
-add r13, 1            ;increment our psuedo counter by 2
+add r13, 1            ;increment our psuedo counter by 2 (pseudo counter is 1 greater than backup counter, + our normal increment = 2)
 add r13, 1            ;increment our psuedo counter by 2
 add r12, 1            ;increment our backup counter by 1
 
@@ -258,12 +242,9 @@ jae calc_sum            ;if <op1> >= <op2>, keep on adding formula to sum (xmm11
                         ;now we need to take care of checking whether r12 (k) is even, and jumping to calc_sum if it is
                         ;or we can compare the next value to be added with zero, if it's less than zero we continue in our loop
 
-;after loop ends
+;after loop ends, store sum of formula in xmm14
 movsd xmm14, xmm11
-;use xmm14 in formula
-;store formula value in xmm10 then add it to xmm11
-;check if formula is less than precision value
-;if it is, exit from loop
+
 
 ;=========================================================================================================================================================
 
@@ -304,7 +285,7 @@ call printf
 ;===========================================================================================================================================================
 
 mov rax, 0
-mov rdi, exec_time
+mov rdi, exec_time        ;"The execution time was %ld tics."
 sub r15, r14
 mov rsi, r15
 call printf
