@@ -1,3 +1,7 @@
+*.o
+*.out
+*.lis
+
 loops.o
 sum.o
 sum.lis
